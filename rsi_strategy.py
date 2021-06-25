@@ -30,44 +30,6 @@ import time
 import traceback
 
 
-config_file_path = './config.ini'
-
-app = IIFL(config_file_path)
-
-token_authorized, login_id = app.login()
-
-print("Login Successful:", login_id)
-
-# margin_dict = app.margin()
-
-# print(margin_dict)
-
-# num_positions, pos_df = app.net_position()
-
-# scrip = 35006
-# exchange = 'n'
-# exchange_type = 'd'
-# interval = '1m'
-# from_date = '2021-06-21'
-# end_date = '2021-06-21'
-
-# if token_authorized:
-#     hist_data = app.get_historical_data(scrip, exchange, exchange_type, interval, 
-#                         from_date, end_date)
-    
-#     print(hist_data)
-# else:
-#     print('Token Not authorized')
-    
-# TODO: Fetch orderbook, tradebook, placeorder, orderstatus, livefeed
-
-# num_orders, orderbook = app.get_orderbook()
-
-# num_trades, tradebook = app.get_tradebook()
-
-# current_price = app.get_current_price(2885, 'N','C')
-
-###############################################################################
 # Define parameters
 config_file_path = './config.ini'
 
@@ -84,9 +46,12 @@ lookback = 5
 # Define threshold
 threshold = 40
 
+# Define intraday variable
+_is_intraday = True
+
 # Define start and end dates for fetching historical data
-start_date = '2021-06-22'
-end_date = '2021-06-22'
+start_date = '2021-06-25'
+end_date = '2021-06-25'
 
 app = IIFL(config_file_path)
 
@@ -94,15 +59,16 @@ token_authorized, login_id = app.login()
 
 print("Login Successful:", login_id)
 
-scrips = [{'scrip': '51354', 'exchange': 'n', 'exchange_type': 'd', 
-           'position': 0, 'net_qty':0, 'name': '15800 PE', 'trade_qty': 75, 
+scrips = [{'scrip': '3045', 'exchange': 'n', 'exchange_type': 'c', 
+           'position': 0, 'net_qty':0, 'name': 'SBIN', 'trade_qty': 3, 
            'market_orders': False}, 
-          {'scrip': '35062', 'exchange': 'n', 'exchange_type': 'd', 
-           'position': 0, 'net_qty': 0, 'name': '15900 CE', 'trade_qty': 75,
-           'market_orders': False}]
-          #   ,
-          # {'scrip': '772', 'exchange': 'n', 'exchange_type': 'c', 
-          #  'position': 0, 'net_qty': 0, 'name': 'DABUR', 'trade_qty': 1}],
+          {'scrip': '1660', 'exchange': 'n', 'exchange_type': 'c', 
+           'position': 0, 'net_qty': 0, 'name': 'ITC', 'trade_qty': 5,
+           'market_orders': False},      
+          {'scrip': '4668', 'exchange': 'n', 'exchange_type': 'c', 
+           'position': 0, 'net_qty': 0, 'name': 'BANKBARODA', 'trade_qty': 4,
+           'market_orders':False}]
+# ,
           # {'scrip': '51348', 'exchange': 'n', 'exchange_type': 'd', 
           #  'position': 0, 'net_qty': 0, 'name': '15650 PE', 'trade_qty': 75}]
 
@@ -163,39 +129,45 @@ def execute_logic(scrip):
         scrip['current_rsi'] = round(scrip['hist_data']['rsi'][-1], 2)
         scrip['prev_rsi'] = round(scrip['hist_data']['rsi'][-2], 2)
         
-        print(f"For {scrip_name} current rsi - {scrip['current_rsi']}, prev rsi - {scrip['prev_rsi']}")
-        
-        if not scrip['market_orders']:
-            scrip['current_price'] = app.get_current_price(scrip['scrip'],
-                                                           scrip['exchange'].upper(),
-                                                           scrip['exchange_type'].upper())
-        else:
-            scrip['current_price'] = 0
+        print(f"For {scrip_name} current rsi - {scrip['current_rsi']}, \
+              prev rsi - {scrip['prev_rsi']}")
         
         # Check for short enter condition
         if (scrip['current_rsi'] < threshold) & (scrip['prev_rsi'] > threshold):
             
             # Check if we have an open position. If not, open it.
             if scrip['position'] == 0:
+                
+                if scrip['market_orders'] == False:
+                    scrip['current_price'] = app.get_current_price(scrip['scrip'],
+                                                           scrip['exchange'].upper(),
+                                                           scrip['exchange_type'].upper())
+            
+                else:
+                    scrip['current_price'] = 0
+                
                 print('Enter short position for scrip: ', scrip_name)
+                print('Current price of ', scrip_name, 'is', 
+                      round(scrip['current_price'], 2))
                 
                 order_side = 'sell'
                 
-                scrip['broker_order_id'], scrip['remote_order_id'] = app.place_order(scrip['scrip'],
+                scrip['broker_order_id'], scrip['remote_order_id'], message = app.place_order(scrip['scrip'],
                                                                                      scrip['exchange'],
                                                                                      scrip['exchange_type'], 
                                                                                      price=scrip['current_price'], 
                                                                                      side=order_side,                                   
                                                                                      qty=scrip['trade_qty'], 
                                                                                      mkt_order=scrip['market_orders'], 
-                                                                                     is_intraday=False,
+                                                                                     is_intraday=_is_intraday,
                                                                                      new_or_modify='P',
                                                                                      exchange_order_id=0)
                 
                 order_placed = True
                 
                 print('New entry order placed for scrip:', scrip_name, 
-                      'with order id', scrip['broker_order_id'])
+                      'with broker order id', scrip['broker_order_id'], 'at', scrip['current_price'])
+                print('Msg from Broker:', message)
                 
                 # Update the scrip positions
                 scrip['position'] = -1
@@ -207,33 +179,46 @@ def execute_logic(scrip):
             num_positions, pos_df = app.net_position()
             
             if num_positions > 0:
-                scrip_pos = pos_df[pos_df['ScripCode'] == float(scrip['scrip'])]['NetQty'].iloc[-1]   
-                                          
-                # Check if we have a short position. If yes, close it.
-                # if scrip['position'] == -1:
-                if scrip_pos < 0:
-                    print('Exit short position for scrip: ', scrip_name)
+                filtered_pos = pos_df[pos_df['ScripCode'] == float(scrip['scrip'])]
+                
+                if len(filtered_pos) > 0:
                     
-                    order_side = 'buy'
-                    
-                    scrip['broker_order_id'], scrip['remote_order_id'] = app.place_order(scrip['scrip'], 
-                                                                                         scrip['exchange'], 
-                                                                                         scrip['exchange_type'], 
-                                                                                         price=scrip['current_price'], 
-                                                                                         side=order_side,                                
-                                                                                         qty=scrip['trade_qty'], 
-                                                                                         mkt_order=scrip['market_orders'], 
-                                                                                         is_intraday=False,
-                                                                                         new_or_modify='P',
-                                                                                         exchange_order_id=0)
-                    
-                    order_placed = True
-                    
-                    print('New exit order placed for scrip:', scrip_name, 
-                          'with order id', scrip['broker_order_id'])
-                    
-                    # Update the scrip position
-                    scrip['position'] = 0
+                    scrip_pos = filtered_pos['NetQty'].iloc[-1]   
+                                              
+                    # Check if we have a short position. If yes, close it.
+                    # if scrip['position'] == -1:
+                    if scrip_pos < 0:
+                        
+                        if scrip['market_orders'] == False:
+                            scrip['current_price'] = app.get_current_price(scrip['scrip'],
+                                                               scrip['exchange'].upper(),
+                                                               scrip['exchange_type'].upper())
+                        else:
+                            scrip['current_price'] = 0
+                        
+                        print('Exit short position for scrip: ', scrip_name)
+                        
+                        order_side = 'buy'
+                        
+                        scrip['broker_order_id'], scrip['remote_order_id'], message = app.place_order(scrip['scrip'], 
+                                                                                             scrip['exchange'], 
+                                                                                             scrip['exchange_type'], 
+                                                                                             price=scrip['current_price'], 
+                                                                                             side=order_side,                                
+                                                                                             qty=scrip['trade_qty'], 
+                                                                                             mkt_order=scrip['market_orders'], 
+                                                                                             is_intraday=_is_intraday,
+                                                                                             new_or_modify='P',
+                                                                                             exchange_order_id=0)
+                        
+                        order_placed = True
+                        
+                        print('New exit order placed for scrip:', scrip_name, 
+                              'with order id', scrip['broker_order_id'], 'at', scrip['current_price'])
+                        print('Msg from Broker:', message)
+                        
+                        # Update the scrip position
+                        scrip['position'] = 0
             else:
                 print('No short positions exists for scrip: ', scrip_name)
             
@@ -242,19 +227,23 @@ def execute_logic(scrip):
         
         while order_placed:
             # If order is placed, wait for 3 seconds before checking its status
-            time.sleep(3)
-            
-            # Check status
-            scrip['order_status'] = app.get_order_status(scrip['remote_order_id'],
-                                                         scrip['exchange'],
-                                                         scrip['exchange_type'],
-                                                         scrip['scrip'])
-            
-            if isinstance(scrip['order_status'], str):
-                print('Cannot fetch order status')
-            elif isinstance(scrip['order_status'], dict):
+            time.sleep(5)
+            try:
+                # Check status
+                scrip['order_status'] = app.get_order_status(scrip['remote_order_id'],
+                                                             scrip['exchange'],
+                                                             scrip['exchange_type'],
+                                                             scrip['scrip'])
                 
-                pending_qty = scrip['order_status']['pending_qty']
+                print('Order Status for', scrip_name, 'is', 
+                      scrip['order_status']['Status'], 'and pending qty is', 
+                      scrip['order_status']['PendingQty'])
+                
+                # if isinstance(scrip['order_status'], str):
+                #     print('Cannot fetch order status')
+                # elif isinstance(scrip['order_status'], dict):
+                    
+                pending_qty = scrip['order_status']['PendingQty']
                 
                 # If the order is not executed or partially executed, modify the order
                 if pending_qty > 0:
@@ -263,21 +252,26 @@ def execute_logic(scrip):
                                                                    scrip['exchange_type'].upper())
                     
                     # Place modified order
-                    scrip['broker_order_id'], scrip['remote_order_id'] = app.place_order(scrip['scrip'], 
+                    scrip['broker_order_id'], scrip['remote_order_id'], message = app.place_order(scrip['scrip'], 
                                                                                          scrip['exchange'], 
                                                                                          scrip['exchange_type'], 
                                                                                          price=scrip['current_price'],
                                                                                          side=order_side,
                                                                                          qty=pending_qty,
                                                                                          mkt_order=scrip['market_orders'],
-                                                                                         is_intraday=False,
+                                                                                         is_intraday=_is_intraday,
                                                                                          new_or_modify='M',
                                                                                          exchange_order_id=scrip['order_status']['ExchOrderID'])
                     
-                    print('Modified order placed for scrip: ', scrip_name)
-                elif pending_qty == 0:
-                    order_placed = False
+                    print('Modified order placed for ', scrip_name, 'at', 
+                          scrip['current_price'], 'with exchange order id', 
+                          scrip['order_status']['ExchOrderID'])
+                    print('Msg from Broker:', message)
                 
+                if pending_qty == 0:
+                    order_placed = False
+            except:
+                order_place= False
         
     print('Finished execution for scrip:', scrip_name)
 
@@ -309,8 +303,8 @@ def show_info():
 # The following code executes things iteratively
 
 # Define start and end date and time for algo execution
-_start_time = '2021-06-22 09:15:00'
-_end_time = '2021-06-22 15:30:00'
+_start_time = '2021-06-25 09:15:00'
+_end_time = '2021-06-25 15:30:00'
 
 # Define the default time format
 tf = '%Y-%m-%d %H:%M:%S'
@@ -347,7 +341,6 @@ try:
         elif datetime.strptime(current_time, tf) > datetime.strptime(_end_time, 
                                                                      tf):
             print('Finish. Disconnecting the application:', current_time)
-            app.disconnect()
             break
         
         elif datetime.strptime(current_time, tf).minute % 2 == 0:

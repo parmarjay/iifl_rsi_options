@@ -99,17 +99,17 @@ class IIFL():
     def login(self):
         
         try:
-            url, headers, payload = self.bo.get_request_data('login')
+            url, headers, l_payload = self.bo.get_request_data('login')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - login: ' + msg)
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif l_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - login: ' + msg)
             
             login_res = rq.post(url, headers=headers, 
-                                data=json.dumps(payload),
+                                data=json.dumps(l_payload),
                                 timeout=5)
             
             parsed_res_text = json.loads(login_res.text)
@@ -140,7 +140,7 @@ class IIFL():
     def validate_token(self):
         
         try:
-            url, headers, payload = self.bo.get_request_data('validate_token')
+            url, headers, vt_payload = self.bo.get_request_data('validate_token')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
@@ -148,10 +148,10 @@ class IIFL():
                                   msg)
             else:
                 
-                payload['JwtCode'] = self.jwt_token
+                vt_payload['JwtCode'] = self.jwt_token
                 
                 res = rq.post(url, headers=headers, 
-                              data=json.dumps(payload), 
+                              data=json.dumps(vt_payload), 
                               cookies=self.cookies,
                               timeout=5)
                 
@@ -173,20 +173,20 @@ class IIFL():
     def margin(self):
         
         try:
-            url, headers, payload = self.bo.get_request_data('margin')
+            url, headers, m_payload = self.bo.get_request_data('margin')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - margin: ' 
                                   + msg)
                 
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif m_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - margin: ' 
                                   + msg)
             else:
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(m_payload),
                               cookies=self.cookies,
                               timeout=5)
     
@@ -208,19 +208,19 @@ class IIFL():
     def net_position(self):
         
         try:
-            url, headers, payload = self.bo.get_request_data('net_positions')
+            url, headers, np_payload = self.bo.get_request_data('net_positions')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - net_positions: ' 
                                   + msg)
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif np_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - net_positions: ' 
                                   + msg)
             else:
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(np_payload),
                               cookies=self.cookies,
                               timeout=5)
                 
@@ -272,7 +272,7 @@ class IIFL():
                               + msg)
             
         try:
-            url, headers, payload = self.bo.get_request_data('historical')
+            url, headers, hd_payload = self.bo.get_request_data('historical')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
@@ -343,20 +343,20 @@ class IIFL():
         
         try:
             
-            url, headers, payload = self.bo.get_request_data('orderbook')
+            url, headers, ob_payload = self.bo.get_request_data('orderbook')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - get_orderbook: ' 
                                   + msg)
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif ob_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - get_orderbook: ' 
                                   + msg)
             else:
                 
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(ob_payload),
                               cookies=self.cookies,
                               timeout=5)
                 
@@ -390,20 +390,20 @@ class IIFL():
         
         try:
             
-            url, headers, payload = self.bo.get_request_data('tradebook')
+            url, headers, tb_payload = self.bo.get_request_data('tradebook')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - get_tradebook: ' 
                                   + msg)
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif tb_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - get_tradebook: ' 
                                   + msg)
             else:
                 
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(tb_payload),
                               cookies=self.cookies,
                               timeout=5)
                 
@@ -459,44 +459,43 @@ class IIFL():
             
         try:
             
-            url, headers, payload = self.bo.get_request_data('order_status')
+            url, headers, ords_payload = self.bo.get_request_data('order_status')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
-                raise CustomError('CustomError - iiflb - get_current_price: ' 
+                raise CustomError('CustomError - iiflb - get_order_status: ' 
                                   + msg)
                 
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif ords_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
-                raise CustomError('CustomError - iiflb - get_current_price: ' 
+                raise CustomError('CustomError - iiflb - get_order_status: ' 
                                   + msg)
             else:
                 order_parameters = {
                     'Exch': str(exchange).upper(),
                     'ExchType': str(exchange_type).upper(),
                     'ScripCode': int(scrip_code),
-                    'RemoteOrderId': str(remote_order_id)}
+                    'RemoteOrderID': str(remote_order_id)}
                 
-                payload['body']['OrdStatusReqList'] = [order_parameters]
+                ords_payload['body']['OrdStatusReqList'] = [order_parameters]
                 
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(ords_payload),
                               cookies=self.cookies)
                 
                 parsed_res = json.loads(res.text)
                 
-                print(parsed_res)
+                # print('Order Status Payload.\n', json.dumps(ords_payload))
+                
+                # print(parsed_res)
                 
                 if res.ok:
                     if parsed_res['body']['Status'] == 0:
-                        # order_status = parsed_res['body']['OrdStatusResLst'][-1]['Status']
-                        # pending_qty = parsed_res['body']['OrdStatusResLst'][-1]['PendingQty']
-                        # traded_qty = parsed_res['body']['OrdStatusResLst'][-1]['TradedQty']
                         
-                        # return order_status, pending_qty, traded_qty
                         return parsed_res['body']['OrdStatusResLst'][-1]
                     
                     else:
+                        print('Order Status Response\n')
                         print(parsed_res)
                         return "Cannot fetch order status"
                     
@@ -518,36 +517,36 @@ class IIFL():
             
         try:
             
-            url, headers, payload = self.bo.get_request_data('current_price')
+            url, headers, cp_payload = self.bo.get_request_data('current_price')
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - get_current_price: ' 
                                   + msg)
                 
-            elif payload['head']['requestCode'] == self.bo.default_rc:
+            elif cp_payload['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - get_current_price: ' 
                                   + msg)
             else:
                 current_timestamp = str(int(datetime.now().timestamp()))
                 
-                payload['body']['Count'] = 1 # Number of scrips
-                payload['body']['MarketFeedData'] = [{'Exch':exchange,
+                cp_payload['body']['Count'] = 1 # Number of scrips
+                cp_payload['body']['MarketFeedData'] = [{'Exch':exchange,
                                                       'ExchType':exchange_type,
                                                       'ScripCode':scrip}]
-                payload['body']['ClientLoginType'] = '0'
-                payload['body']['LastRequestTime'] = '/Date('+ current_timestamp + ')/'
-                payload['body']['RefreshRate'] = 'H' # Cache refresh rate
+                cp_payload['body']['ClientLoginType'] = '0'
+                cp_payload['body']['LastRequestTime'] = '/Date('+ current_timestamp + ')/'
+                cp_payload['body']['RefreshRate'] = 'H' # Cache refresh rate
                 
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(cp_payload),
                               cookies=self.cookies,
                               timeout=5)
                 
                 parsed_res = json.loads(res.text)
                 
-                print(parsed_res)
+                # print(parsed_res)
                 
                 if res.ok:
                     if parsed_res['body']['Status'] == 0:
@@ -610,40 +609,40 @@ class IIFL():
             
         try:
             
-            url, headers, payload = self.bo.get_request_data('place_order')
+            url, headers, po_payload = self.bo.get_request_data('place_order')
             
             current_timestamp = str(int(datetime.now().timestamp()))
             tomorrows_date = str(int((datetime.today() + timedelta(1)).timestamp()))
             
             custom_order_id = self.get_order_id()
             
-            payload['_ReqData']['body']['Exchange'] = exchange.upper()
-            payload['_ReqData']['body']['ExchangeType'] = exchange_type.upper()
-            payload['_ReqData']['body']['price'] = float(price)
-            payload['_ReqData']['body']['OrderID'] = custom_order_id
-            payload['_ReqData']['body']['OrderType'] = side.upper()
-            payload['_ReqData']['body']['Qty'] = int(qty)
-            payload['_ReqData']['body']['OrderDateTime'] = '/Date('+ current_timestamp + ')/'
-            payload['_ReqData']['body']['ValidTillDate'] = '/Date('+ tomorrows_date + ')/'
-            payload['_ReqData']['body']['ScripCode'] = int(scrip)
-            payload['_ReqData']['body']['AtMarket'] = mkt_order
-            payload['_ReqData']['body']['RemoteOrderID'] = custom_order_id
-            payload['_ReqData']['body']['IsIntraday'] = is_intraday
-            payload['_ReqData']['body']['OrderFor'] = new_or_modify.upper()
-            payload['_ReqData']['body']['ExchOrderID'] = str(exchange_order_id)
+            po_payload['_ReqData']['body']['Exchange'] = exchange.upper()
+            po_payload['_ReqData']['body']['ExchangeType'] = exchange_type.upper()
+            po_payload['_ReqData']['body']['Price'] = float(price)
+            po_payload['_ReqData']['body']['OrderID'] = custom_order_id
+            po_payload['_ReqData']['body']['OrderType'] = side.upper()
+            po_payload['_ReqData']['body']['Qty'] = int(qty)
+            po_payload['_ReqData']['body']['OrderDateTime'] = '/Date('+ current_timestamp + ')/'
+            po_payload['_ReqData']['body']['ValidTillDate'] = '/Date('+ tomorrows_date + ')/'
+            po_payload['_ReqData']['body']['ScripCode'] = int(scrip)
+            po_payload['_ReqData']['body']['AtMarket'] = mkt_order
+            po_payload['_ReqData']['body']['RemoteOrderID'] = custom_order_id
+            po_payload['_ReqData']['body']['IsIntraday'] = is_intraday
+            po_payload['_ReqData']['body']['OrderFor'] = new_or_modify.upper()
+            po_payload['_ReqData']['body']['ExchOrderID'] = str(exchange_order_id)
             
             if url == '':
                 msg = 'Requesting URL cannot be empty.'
                 raise CustomError('CustomError - iiflb - place_order: ' 
                                   + msg)
                 
-            elif payload['_ReqData']['head']['requestCode'] == self.bo.default_rc:
+            elif po_payload['_ReqData']['head']['requestCode'] == self.bo.default_rc:
                 msg = 'Default request code received.'
                 raise CustomError('CustomError - iiflb - place_order: ' 
                                   + msg)
             else:
                 res = rq.post(url, headers=headers,
-                              data=json.dumps(payload),
+                              data=json.dumps(po_payload),
                               cookies=self.cookies,
                               timeout=5)
                 
@@ -654,8 +653,10 @@ class IIFL():
                     if parsed_res['body']['Status'] == 0:
                         broker_order_id = parsed_res['body']['BrokerOrderID']
                         remote_order_id = custom_order_id
-                        return broker_order_id, remote_order_id
+                        message = parsed_res['body']['Message']
+                        return broker_order_id, remote_order_id, message
                     else:
+                        print('From place_order function!')
                         print(parsed_res)
                         msg = 'Order is not placed.'
                         raise CustomError('CustomError - iiflb - place_order: ' 
