@@ -115,6 +115,10 @@ def execute_logic(scrip):
     
     print('\nScrip name:', scrip_name)
     
+    scrip['current_price'] = app.get_current_price(scrip['scrip'],
+                                                   scrip['exchange'].upper(),
+                                                   scrip['exchange_type'].upper())
+    
     # Variable to check whether we placed an order or not
     order_placed = False
     
@@ -137,10 +141,6 @@ def execute_logic(scrip):
         
         scrip['hist_download'] = False
     else:
-        
-        scrip['current_price'] = app.get_current_price(scrip['scrip'],
-                                                   scrip['exchange'].upper(),
-                                                   scrip['exchange_type'].upper())
         
         print('The current price for', scrip_name, 'is', 
               round(scrip['current_price'], 2))
@@ -169,8 +169,8 @@ def execute_logic(scrip):
                                            timeperiod=lookback)
         
         # Get current and the previous RSI values
-        scrip['current_rsi'] = round(scrip['hist_data']['rsi'][-1], 2)
-        scrip['prev_rsi'] = round(scrip['hist_data']['rsi'][-2], 2)
+        scrip['current_rsi'] = round(scrip['hist_data']['rsi'].iloc[-1], 2)
+        scrip['prev_rsi'] = round(scrip['hist_data']['rsi'].iloc[-2], 2)
         
         print(f"For {scrip_name} current rsi - {scrip['current_rsi']}, \
               prev rsi - {scrip['prev_rsi']}")
