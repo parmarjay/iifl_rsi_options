@@ -28,6 +28,22 @@ from datetime import datetime
 import talib as ta
 import time
 import traceback
+from datetime import time as t
+
+# TODO: Print last price, append new data to historical data, print timings, retry failed requests
+
+config_file_path = './config.ini'
+
+app = IIFL(config_file_path)
+
+token_authorized, login_id = app.login()
+
+print("Login Successful:", login_id)
+
+
+hist_data = app.get_historical_data(3045, 'n', 'c', '5m', '2021-06-29', '2021-06-30')
+
+current_price = app.get_current_price(3045, 'N', 'C')
 
 
 # Define parameters
@@ -35,23 +51,25 @@ config_file_path = './config.ini'
 
 # Define execution frequency
 # 1T = 1 Minute, 3T = 3 Minutes, 5T = 5 Minutes
-_frequency = '1T'
+_frequency = '5T'
 
 # Define candle size. This should be in-line with trading frequency
-interval = '1m'
+interval = '5m'
 
 # Define lookback
-lookback = 5
+lookback = 4
 
 # Define threshold
-threshold = 40
+threshold = 60
 
 # Define intraday variable
 _is_intraday = True
 
 # Define start and end dates for fetching historical data
-start_date = '2021-06-25'
-end_date = '2021-06-25'
+start_date = '2021-07-02'
+end_date = '2021-07-02'
+
+last_candle_time = t(15 , 30 , 0)
 
 app = IIFL(config_file_path)
 
@@ -61,13 +79,13 @@ print("Login Successful:", login_id)
 
 scrips = [{'scrip': '3045', 'exchange': 'n', 'exchange_type': 'c', 
            'position': 0, 'net_qty':0, 'name': 'SBIN', 'trade_qty': 3, 
-           'market_orders': False}, 
+           'market_orders': False, 'hist_download':True}, 
           {'scrip': '1660', 'exchange': 'n', 'exchange_type': 'c', 
            'position': 0, 'net_qty': 0, 'name': 'ITC', 'trade_qty': 5,
-           'market_orders': False},      
+           'market_orders': False, 'hist_download':True},      
           {'scrip': '4668', 'exchange': 'n', 'exchange_type': 'c', 
            'position': 0, 'net_qty': 0, 'name': 'BANKBARODA', 'trade_qty': 4,
-           'market_orders':False}]
+           'market_orders':False, 'hist_download':True}]
 # ,
           # {'scrip': '51348', 'exchange': 'n', 'exchange_type': 'd', 
           #  'position': 0, 'net_qty': 0, 'name': '15650 PE', 'trade_qty': 75}]
@@ -100,21 +118,46 @@ def execute_logic(scrip):
     # Get the scrip name
     scrip_name = scrip['name']
     
+    print('\nScrip name:', scrip_name)
+    
     # Variable to check whether we placed an order or not
     order_placed = False
     
     # Define default order side
     order_side = ''
     
-    # Fetch historical data
-    scrip['hist_data'] = app.get_historical_data(scrip['scrip'], 
-                                        scrip['exchange'], 
-                                        scrip['exchange_type'],
-                                        interval,
-                                        start_date,
-                                        end_date)
-    
-    print('\nScrip name:', scrip_name)
+    if scrip['hist_download'] == True:
+        
+        # Fetch historical data
+        scrip['hist_data'] = app.get_historical_data(scrip['scrip'], 
+                                            scrip['exchange'], 
+                                            scrip['exchange_type'],
+                                            interval,
+                                            start_date,
+                                            end_date)
+        
+        row_to_delete = scrip['hist_data'][scrip['hist_data'].index.time == last_candle_time]
+        
+        scrip['hist_data'].drop(index=row_to_delete.index, inplace=True)
+    else:
+        
+        scrip['current_price'] = app.get_current_price(scrip['scrip'],
+                                                   scrip['exchange'].upper(),
+                                                   scrip['exchange_type'].upper())
+            
+        new_data = {
+            'open': 0,
+            'high': 0,
+            'low': 0,
+            'close': scrip['current_price'],
+            'volume': 0
+            }
+        
+        scrip['hist_data'] = scrip['hist_data'].append(new_data, ignore_index=True)
+        
+        if scrip['market_orders'] == True:
+            scrip['current_price'] = 0
+
     
     # Generate trading signals if historical data is available
     if len(scrip['hist_data']) <= lookback:
@@ -137,14 +180,6 @@ def execute_logic(scrip):
             
             # Check if we have an open position. If not, open it.
             if scrip['position'] == 0:
-                
-                if scrip['market_orders'] == False:
-                    scrip['current_price'] = app.get_current_price(scrip['scrip'],
-                                                           scrip['exchange'].upper(),
-                                                           scrip['exchange_type'].upper())
-            
-                else:
-                    scrip['current_price'] = 0
                 
                 print('Enter short position for scrip: ', scrip_name)
                 print('Current price of ', scrip_name, 'is', 
@@ -189,12 +224,12 @@ def execute_logic(scrip):
                     # if scrip['position'] == -1:
                     if scrip_pos < 0:
                         
-                        if scrip['market_orders'] == False:
-                            scrip['current_price'] = app.get_current_price(scrip['scrip'],
-                                                               scrip['exchange'].upper(),
-                                                               scrip['exchange_type'].upper())
-                        else:
-                            scrip['current_price'] = 0
+                        # if scrip['market_orders'] == False:
+                        #     scrip['current_price'] = app.get_current_price(scrip['scrip'],
+                        #                                        scrip['exchange'].upper(),
+                        #                                        scrip['exchange_type'].upper())
+                        # else:
+                        #     scrip['current_price'] = 0
                         
                         print('Exit short position for scrip: ', scrip_name)
                         
@@ -303,8 +338,8 @@ def show_info():
 # The following code executes things iteratively
 
 # Define start and end date and time for algo execution
-_start_time = '2021-06-25 09:15:00'
-_end_time = '2021-06-25 15:30:00'
+_start_time = '2021-07-05 09:15:00'
+_end_time = '2021-07-05 15:30:00'
 
 # Define the default time format
 tf = '%Y-%m-%d %H:%M:%S'
