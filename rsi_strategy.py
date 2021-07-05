@@ -31,7 +31,7 @@ import traceback
 import pytz
 from datetime import time as t
 
-# TODO: Print last price, append new data to historical data, print timings, retry failed requests
+# TODO: print timings, retry failed requests
 
 # Define parameters
 config_file_path = './config.ini'
@@ -134,6 +134,8 @@ def execute_logic(scrip):
         row_to_delete = scrip['hist_data'][scrip['hist_data'].index.time == last_candle_time]
         
         scrip['hist_data'].drop(index=row_to_delete.index, inplace=True)
+        
+        scrip['hist_download'] = False
     else:
         
         scrip['current_price'] = app.get_current_price(scrip['scrip'],
