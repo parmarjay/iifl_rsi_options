@@ -24,10 +24,11 @@ Created on Fri Jun 18 22:03:50 2021
 from iifl_broker import IIFL
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 import talib as ta
 import time
 import traceback
+import pytz
 from datetime import time as t
 
 # TODO: Print last price, append new data to historical data, print timings, retry failed requests
@@ -66,8 +67,16 @@ threshold = 60
 _is_intraday = True
 
 # Define start and end dates for fetching historical data
-start_date = '2021-07-02'
-end_date = '2021-07-02'
+
+tz = pytz.timezone('Asia/Kolkata')
+
+end_date = datetime.now(tz)
+end_date = (end_date.replace(second=0, microsecond=0)).strftime('%Y-%m-%d')
+start_date = (datetime.now(tz) - timedelta(minutes=5760))  # fetch last 4 days of data from current time
+start_date = (start_date.replace(second=0, microsecond=0)).strftime('%Y-%m-%d')
+
+# start_date = '2021-07-02'
+# end_date = '2021-07-02'
 
 last_candle_time = t(15 , 30 , 0)
 
