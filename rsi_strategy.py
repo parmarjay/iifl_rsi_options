@@ -33,20 +33,6 @@ from datetime import time as t
 
 # TODO: Print last price, append new data to historical data, print timings, retry failed requests
 
-config_file_path = './config.ini'
-
-app = IIFL(config_file_path)
-
-token_authorized, login_id = app.login()
-
-print("Login Successful:", login_id)
-
-
-hist_data = app.get_historical_data(3045, 'n', 'c', '5m', '2021-06-29', '2021-06-30')
-
-current_price = app.get_current_price(3045, 'N', 'C')
-
-
 # Define parameters
 config_file_path = './config.ini'
 
@@ -153,6 +139,9 @@ def execute_logic(scrip):
         scrip['current_price'] = app.get_current_price(scrip['scrip'],
                                                    scrip['exchange'].upper(),
                                                    scrip['exchange_type'].upper())
+        
+        print('The current price for', scrip_name, 'is', 
+              round(scrip['current_price'], 2))
             
         new_data = {
             'open': 0,
