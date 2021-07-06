@@ -7,18 +7,9 @@ Created on Fri Jun 18 22:03:50 2021
 
 '''
 # TODO:
-- Create a strategy object
-- Connect
-- fetch historical data
-- Compute RSI
-- Check for signals
-- Place orders
 - Monitor (Show Net positions, total MTM)
-- Load scrips
 
 - Logging / Create logs
-- Store historical data
-
 '''
 
 from iifl_broker import IIFL
@@ -31,17 +22,17 @@ import traceback
 import pytz
 from datetime import time as t
 
-# TODO: print timings, retry failed requests
+# TODO: Retry failed requests
 
 # Define parameters
 config_file_path = './config.ini'
 
 # Define execution frequency
 # 1T = 1 Minute, 3T = 3 Minutes, 5T = 5 Minutes
-_frequency = '5T'
+_frequency = '15T'
 
 # Define candle size. This should be in-line with trading frequency
-interval = '5m'
+interval = '15m'
 
 # Define lookback
 lookback = 4
@@ -50,7 +41,7 @@ lookback = 4
 threshold = 60
 
 # Define intraday variable
-_is_intraday = True
+_is_intraday = False
 
 # Define start and end dates for fetching historical data
 
@@ -64,6 +55,11 @@ start_date = (start_date.replace(second=0, microsecond=0)).strftime('%Y-%m-%d')
 # start_date = '2021-07-02'
 # end_date = '2021-07-02'
 
+# Define the last execution time
+market_close_time = datetime.today()
+market_close_time = market_close_time.replace(hour=15, minute=28, second=0)
+
+# Define the last candle time which needs to be removed from the historical data
 last_candle_time = t(15 , 30 , 0)
 
 app = IIFL(config_file_path)
@@ -72,18 +68,13 @@ token_authorized, login_id = app.login()
 
 print("Login Successful:", login_id)
 
-scrips = [{'scrip': '3045', 'exchange': 'n', 'exchange_type': 'c', 
-           'position': 0, 'net_qty':0, 'name': 'SBIN', 'trade_qty': 3, 
+scrips = [{'scrip': '39498', 'exchange': 'n', 'exchange_type': 'd', 
+           'position': 0, 'net_qty':0, 'name': 'NIFTY 08 Jul 2021 CE 15800.00', 'trade_qty': 75, 
            'market_orders': False, 'hist_download':True}, 
-          {'scrip': '1660', 'exchange': 'n', 'exchange_type': 'c', 
-           'position': 0, 'net_qty': 0, 'name': 'ITC', 'trade_qty': 5,
-           'market_orders': False, 'hist_download':True},      
-          {'scrip': '4668', 'exchange': 'n', 'exchange_type': 'c', 
-           'position': 0, 'net_qty': 0, 'name': 'BANKBARODA', 'trade_qty': 4,
-           'market_orders':False, 'hist_download':True}]
-# ,
-          # {'scrip': '51348', 'exchange': 'n', 'exchange_type': 'd', 
-          #  'position': 0, 'net_qty': 0, 'name': '15650 PE', 'trade_qty': 75}]
+          {'scrip': '39501', 'exchange': 'n', 'exchange_type': 'd', 
+           'position': 0, 'net_qty': 0, 'name': 'NIFTY 08 Jul 2021 PE 15800.00', 'trade_qty': 75,
+           'market_orders': False, 'hist_download':True}      
+          ]
 
 # Fetch net positions
 num_positions, pos_df = app.net_position()
@@ -337,12 +328,15 @@ def show_info():
 
 # The following code executes things iteratively
 
-# Define start and end date and time for algo execution
-_start_time = '2021-07-05 09:15:00'
-_end_time = '2021-07-05 15:30:00'
-
 # Define the default time format
 tf = '%Y-%m-%d %H:%M:%S'
+
+# Define start and end date and time for algo execution
+_start_time = datetime.today()
+_end_time = datetime.today()
+
+_start_time = _start_time.replace(hour=9, minute=15, second=0).strftime(tf)
+_end_time = _end_time.replace(hour=15, minute=30, second=0).strftime(tf)
 
 # Generate timestamps
 timestamps = pd.date_range(start=_start_time, 
@@ -376,6 +370,15 @@ try:
         elif datetime.strptime(current_time, tf) > datetime.strptime(_end_time, 
                                                                      tf):
             print('Finish. Disconnecting the application:', current_time)
+            break
+        
+        # Run for the last time before the market closes
+        elif datetime.strptime(current_time, tf) == datetime.strptime(market_close_time.strftime(tf), tf):
+            print('\n')
+            print('='*20)
+            print('Running for the last time.')
+            print('Executing algorithm:', current_time)
+            run_strategy()
             break
         
         elif datetime.strptime(current_time, tf).minute % 2 == 0:
