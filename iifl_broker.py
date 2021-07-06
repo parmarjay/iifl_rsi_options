@@ -132,7 +132,9 @@ class IIFL():
                 sc = login_res.status_code
                 login_res.close()
                 msg = 'Issue in login. Status code: ' + str(sc)
-                raise CustomError('CustomError - iiflb - login: ' + msg)
+                print(msg, 'Retrying again.')
+                self.login()
+                # raise CustomError('CustomError - iiflb - login: ' + msg)
             
         except:
             print('Error in iiflb - login!\n', traceback.print_exc())
@@ -164,8 +166,11 @@ class IIFL():
                     else:
                         return False
                 else:
+                    sc = res.status_code
                     res.close()
-                    return False
+                    msg = 'Cannot validate token. Status code: ' + str(sc)
+                    print(msg, 'Retrying again.')
+                    self.validate_token()
             
         except:
             print('Error in ifflb - validate_token.\n', traceback.print_exc())
@@ -199,8 +204,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch margin. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - margin: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.margin()
+                    # raise CustomError('CustomError - iiflb - margin: ' + msg)
         
         except:
             print('Error in iiflb - margin!\n', traceback.print_exc())
@@ -244,8 +250,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch net positions. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - net_positions: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.net_position()
+                    # raise CustomError('CustomError - iiflb - net_positions: '  + msg)
             
         except:
             print('Error in iiflb - net_positions!\n', traceback.print_exc())
@@ -333,8 +340,10 @@ class IIFL():
                 sc = res.status_code
                 res.close()
                 msg = 'Cannot fetch historical data. Status code: ' + str(sc)
-                raise CustomError('CustomError - iiflb - get_historical_data: '
-                                  + msg)
+                print(msg, 'Retrying again.')
+                self.get_historical_data(scrip, exchange, exchange_type, 
+                            interval, from_date, end_date)
+                # raise CustomError('CustomError - iiflb - get_historical_data: ' + msg)
         except:
             print('Error in iiflb - get_historical_data!\n', 
                   traceback.print_exc())
@@ -380,8 +389,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch orderbook. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - get_orderbook: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.get_orderbook()
+                    # raise CustomError('CustomError - iiflb - get_orderbook: ' + msg)
             
         except:
             print('Error in iiflb - get_orderbook!\n', traceback.print_exc())
@@ -429,8 +439,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch tradebook. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - get_tradebook: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.get_tradebook()
+                    # raise CustomError('CustomError - iiflb - get_tradebook: ' + msg)
             
         except:
             print('Error in iiflb - get_tradebook!\n', traceback.print_exc())
@@ -503,8 +514,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch order status. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - get_order_status: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.get_order_status(remote_order_id, exchange, exchange_type, scrip_code)
+                    # raise CustomError('CustomError - iiflb - get_order_status: ' + msg)
         
         except:
             print('Error in ifflb - get_order_status!\n', traceback.print_exc())
@@ -559,8 +571,9 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot fetch live price. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - get_current_price: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.get_current_price(scrip, exchange, exchange_type)
+                    # raise CustomError('CustomError - iiflb - get_current_price: ' + msg)
             
         except:
             print('Error in ifflb - get_current_price!\n', traceback.print_exc())
@@ -665,8 +678,11 @@ class IIFL():
                     sc = res.status_code
                     res.close()
                     msg = 'Cannot place order. Status code: ' + str(sc)
-                    raise CustomError('CustomError - iiflb - place_order: ' 
-                                      + msg)
+                    print(msg, 'Retrying again.')
+                    self.place_order(scrip, exchange, exchange_type, price, side, qty, 
+                    mkt_order, is_intraday, new_or_modify, exchange_order_id)
+                    
+                    # raise CustomError('CustomError - iiflb - place_order: ' + msg)
         except:
             print('Error in ifflb - place_order!\n', traceback.print_exc())
             
