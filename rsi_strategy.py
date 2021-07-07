@@ -353,7 +353,7 @@ try:
         # If the current time is less than the strategy start time, then wait
         if datetime.strptime(current_time, tf) < datetime.strptime(_start_time, 
                                                                    tf):
-            print('Wait', current_time)
+            print('Wait, Market is yet not started.. : ', current_time)
             time.sleep(1)
             continue
         
@@ -361,7 +361,7 @@ try:
         # algorithm
         elif current_time in timestamps:
             print('\n')
-            print('='*20)
+            print('='*60)
             print('Executing algorithm:', current_time)
             run_strategy()
             
@@ -375,8 +375,8 @@ try:
         # Run for the last time before the market closes
         elif datetime.strptime(current_time, tf) == datetime.strptime(market_close_time.strftime(tf), tf):
             print('\n')
-            print('='*20)
-            print('Running for the last time.')
+            print('='*60)
+            print('<<<<  Running for the last time. >>>>')
             print('Executing algorithm:', current_time)
             run_strategy()
             break
@@ -389,6 +389,6 @@ try:
         time.sleep(1)
         
 except:
-    print('Error occurred in execution.\n', traceback.print_exc())
+    print('<<<<<<<<< MAYDAY MAYDAY MAYDAY MAYDAY Error occurred in execution.\n', traceback.print_exc())
 finally:
     print('App disconnected.')
