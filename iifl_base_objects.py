@@ -21,6 +21,7 @@ class Base_Objects():
     order_status_endpoint = 'OrderStatus'
     place_order_endpoint = 'OrderRequest'
     market_feed_endpoint = 'MarketFeed'
+    net_wise_net_positions_endpoint = 'NetPositionNetWise'
     
     # Define request codes
     default_rc = 'default'
@@ -32,13 +33,14 @@ class Base_Objects():
     order_status_req_code = 'IIFLMarRQOrdStatus'
     place_order_req_code = 'IIFLMarRQOrdReq'
     market_feed_req_code = 'IIFLMarRQMarketFeed'
-    
+    net_wise_net_positions_req_code = 'IIFLMarRQNPNWV2'
     
     
     def __init__(self, cred_dict):
         
         self.cred_dict = cred_dict
         self.cred_dict['app_source'] = 3157
+        self.unencrypted_client_code = 'PARMARJL'
         
         self.headers = {
             'Content-Type': 'application/json',
@@ -111,6 +113,16 @@ class Base_Objects():
             
             payload = self.payload
             payload['head']['requestCode'] = self.net_positions_req_code
+            
+            modified_headers = self.headers
+            
+        elif req_type == 'net_wise_net_positions':
+            
+            url = self.base_url + self.net_wise_net_positions_endpoint
+            
+            payload = self.payload
+            payload['head']['requestCode'] = self.net_wise_net_positions_req_code
+            payload['body']['Clientcode'] = self.unencrypted_client_code
             
             modified_headers = self.headers
             

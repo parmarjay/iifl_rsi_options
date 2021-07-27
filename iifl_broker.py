@@ -257,6 +257,51 @@ class IIFL():
         except:
             print('Error in iiflb - net_positions!\n', traceback.print_exc())
             
+    def net_wise_net_positions(self):
+        
+        try:
+            url, headers, nwnp_payload = self.bo.get_request_data('net_wise_net_positions')
+            
+            if url == '':
+                msg = 'Requesting URL cannot be empty.'
+                raise CustomError('CustomError - iiflb - net_wise_net_positions: '
+                                  + msg)
+            elif nwnp_payload['head']['requestCode'] == self.bo.default_rc:
+                msg = 'Default request code received.'
+                raise CustomError('CustomError - iiflb - net_wise_net_positions: '
+                                  + msg)
+            else:
+                res = rq.post(url, headers=headers,
+                              data=json.dumps(nwnp_payload),
+                              cookies=self.cookies,
+                              timeout=5)
+                
+                parsed_res = json.loads(res.text)
+                
+                if res.ok:
+                    res.close()
+                    net_wise_positions = parsed_res['body']['NetPositionDetail']
+                    
+                    if len(net_wise_positions) == 0:
+                        return 0, pd.DataFrame()
+                    else:
+                        net_wise_pos_df = pd.DataFrame()
+                        
+                        for position in net_wise_positions:
+                            net_wise_pos_df = net_wise_pos_df.append(position, ignore_index=True)
+                            
+                        return len(net_wise_positions), net_wise_pos_df
+                    
+                else:
+                    sc = res.status_code
+                    res.close()
+                    msg = 'Cannot fetch net positions. Status code: ' + str(sc)
+                    print(msg, 'Retryting again.')
+                    self.net_wise_net_positions()
+                    
+        except:
+            print('Error in iiflb - net_wise_net_positions!\n', traceback.print_exc())
+    
     def get_historical_data(self, scrip, exchange, exchange_type, 
                             interval, from_date, end_date):
         

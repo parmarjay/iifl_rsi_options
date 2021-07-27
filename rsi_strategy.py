@@ -24,6 +24,21 @@ from datetime import time as t
 
 # TODO: Retry failed requests
 
+###############################################################################
+
+# config_file_path = './config.ini'
+
+# app = IIFL(config_file_path)
+# token_authorized, login_id = app.login()
+# print("Login Successful:", login_id)
+
+# num_positions, pos_df = app.net_position()
+
+# num_positions, pos_df = app.net_wise_net_positions()
+
+
+###############################################################################
+
 # Define parameters
 config_file_path = './config.ini'
 
@@ -77,7 +92,7 @@ scrips = [{'scrip': '39498', 'exchange': 'n', 'exchange_type': 'd',
           ]
 
 # Fetch net positions
-num_positions, pos_df = app.net_position()
+num_positions, pos_df = app.net_wise_net_positions()
 
 # Update net positions for each scrip
 if num_positions > 0:
@@ -202,7 +217,7 @@ def execute_logic(scrip):
         elif (scrip['current_rsi'] > threshold) & (scrip['prev_rsi'] < threshold):
             
             # Fetch current net_positions
-            num_positions, pos_df = app.net_position()
+            num_positions, pos_df = app.net_wise_net_positions()
             
             if num_positions > 0:
                 filtered_pos = pos_df[pos_df['ScripCode'] == float(scrip['scrip'])]
@@ -316,7 +331,7 @@ def run_strategy():
             
 def show_info():
     
-    num_positions, pos_df = app.net_position()
+    num_positions, pos_df = app.net_wise_net_positions()
     
     if num_positions > 0:
         print(pos_df[['ScripName', 'BookedPL', 'MtoM', 'NetQty']])
